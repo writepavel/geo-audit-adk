@@ -19,8 +19,9 @@ from google.adk.runners import Runner
 from google.adk.sessions.in_memory_session_service import InMemorySessionService
 from google.genai import types
 
-from .agent import root_agent
+from .agent import get_root_agent
 from .config import get_settings
+from .tools.adk_tools import build_fetch_url_tool, build_generate_pdf_tool
 from .tools.sandbox_tools import create_sandbox_and_tools, destroy_sandbox
 
 
@@ -35,19 +36,15 @@ async def run_audit(url: str) -> dict:
     sandbox_id, sandbox_tools = await create_sandbox_and_tools(settings)
 
     try:
-        # Build agent with sandbox tools
-        from google.adk.agents import Agent
+        # Build ADK tools
+        fetch_url_tool = build_fetch_url_tool(sandbox_tools)
+        generate_pdf_tool = build_generate_pdf_tool(sandbox_tools)
 
-        agent = Agent(
-            name="geo_audit_orchestrator",
-            model=settings.google_adk_model,
-            instruction=(
-                "You are a senior GEO/SEO audit orchestrator. "
-                "Coordinate 5 specialist subagents in parallel, collect their findings, "
-                "and produce a comprehensive audit report with a 0-100 GEO score. "
-                "Use the provided tools to analyze the site and generate a PDF report."
-            ),
-            tools=[sandbox_tools.run_in_sandbox, sandbox_tools.write_file, sandbox_tools.read_file],
+        # Build root agent with all tools wired
+        agent = get_root_agent(
+            sandbox_tools=sandbox_tools,
+            fetch_url_tool=fetch_url_tool,
+            generate_pdf_tool=generate_pdf_tool,
         )
 
         app = type("AuditApp", (), {"name": "geo_audit_app", "root_agent": agent})()
@@ -59,12 +56,15 @@ async def run_audit(url: str) -> dict:
             user_id="cli_user",
         )
 
+        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        pdf_path = f"{settings.audit_output_dir}/audit_{timestamp}.pdf"
+
         prompt = (
             f"Run a complete GEO/SEO audit for {url}. "
             f"Use all 5 subagents (AI Visibility, Technical SEO, Content Quality, "
             f"Schema Markup, Platform Readiness) to analyze the site. "
             f"Collect all findings, compute scores, and generate a PDF report at "
-            f"{settings.audit_output_dir}/audit_{{timestamp}}.pdf. "
+            f"{pdf_path}. "
             f"Return the PDF path and a JSON summary of scores."
         )
 
@@ -87,17 +87,17 @@ async def run_audit(url: str) -> dict:
         result_text = "\n".join(responses)
 
         # Try to extract PDF path from response
-        pdf_path = None
+        found_pdf_path = None
         for line in result_text.split("\n"):
             if "/workspace/audit_" in line or ".pdf" in line.lower():
-                pdf_path = line.strip()
+                found_pdf_path = line.strip()
                 break
 
         return {
             "audit_id": session.id,
             "url": url,
             "response": result_text,
-            "pdf_path": pdf_path,
+            "pdf_path": found_pdf_path or pdf_path,
             "timestamp": datetime.utcnow().isoformat(),
         }
     finally:
@@ -107,7 +107,7 @@ async def run_audit(url: str) -> dict:
 def main() -> int:
     """CLI main entry point."""
     parser = argparse.ArgumentParser(
-        description="GEO Audit ADK Agent — AI-powered GEO/SEO site auditing"
+        description="GEO Audit ADK Agent \u2014 AI-powered GEO/SEO site auditing"
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
@@ -129,6 +129,8 @@ def main() -> int:
             return 0
         except Exception as e:
             print(f"Error: {e}", file=sys.stderr)
+            import traceback
+            traceback.print_exc()
             return 1
 
     return 0
