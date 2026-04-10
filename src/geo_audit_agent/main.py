@@ -21,7 +21,7 @@ from google.genai import types
 
 from .agent import root_agent
 from .config import get_settings
-from .tools.sandbox_tools import build_sandbox_tools
+from .tools.sandbox_tools import create_sandbox_and_tools, destroy_sandbox
 
 
 async def run_audit(url: str) -> dict:
@@ -32,80 +32,76 @@ async def run_audit(url: str) -> dict:
     settings = get_settings()
     settings.validate()
 
-    from .tools.sandbox_tools import create_sandbox_and_tools
-
-    sandbox, sandbox_tools = await create_sandbox_and_tools(settings)
+    sandbox_id, sandbox_tools = await create_sandbox_and_tools(settings)
 
     try:
-        async with sandbox:
-            # Build agent with sandbox tools
-            from google.adk.agents import Agent
+        # Build agent with sandbox tools
+        from google.adk.agents import Agent
 
-            agent = Agent(
-                name="geo_audit_orchestrator",
-                model=settings.google_adk_model,
-                instruction=(
-                    "You are a senior GEO/SEO audit orchestrator. "
-                    "Coordinate 5 specialist subagents in parallel, collect their findings, "
-                    "and produce a comprehensive audit report with a 0-100 GEO score. "
-                    "Use the provided tools to analyze the site and generate a PDF report."
-                ),
-                tools=sandbox_tools,
-            )
+        agent = Agent(
+            name="geo_audit_orchestrator",
+            model=settings.google_adk_model,
+            instruction=(
+                "You are a senior GEO/SEO audit orchestrator. "
+                "Coordinate 5 specialist subagents in parallel, collect their findings, "
+                "and produce a comprehensive audit report with a 0-100 GEO score. "
+                "Use the provided tools to analyze the site and generate a PDF report."
+            ),
+            tools=[sandbox_tools.run_in_sandbox, sandbox_tools.write_file, sandbox_tools.read_file],
+        )
 
-            app = type("AuditApp", (), {"name": "geo_audit_app", "root_agent": agent})()
-            session_service = InMemorySessionService()
-            runner = Runner(app=app, session_service=session_service)
+        app = type("AuditApp", (), {"name": "geo_audit_app", "root_agent": agent})()
+        session_service = InMemorySessionService()
+        runner = Runner(app=app, session_service=session_service)
 
-            session = await session_service.create_session(
-                app_name=app.name,
-                user_id="cli_user",
-            )
+        session = await session_service.create_session(
+            app_name=app.name,
+            user_id="cli_user",
+        )
 
-            prompt = (
-                f"Run a complete GEO/SEO audit for {url}. "
-                f"Use all 5 subagents (AI Visibility, Technical SEO, Content Quality, "
-                f"Schema Markup, Platform Readiness) to analyze the site. "
-                f"Collect all findings, compute scores, and generate a PDF report at "
-                f"{settings.audit_output_dir}/audit_{{timestamp}}.pdf. "
-                f"Return the PDF path and a JSON summary of scores."
-            )
+        prompt = (
+            f"Run a complete GEO/SEO audit for {url}. "
+            f"Use all 5 subagents (AI Visibility, Technical SEO, Content Quality, "
+            f"Schema Markup, Platform Readiness) to analyze the site. "
+            f"Collect all findings, compute scores, and generate a PDF report at "
+            f"{settings.audit_output_dir}/audit_{{timestamp}}.pdf. "
+            f"Return the PDF path and a JSON summary of scores."
+        )
 
-            content = types.Content(
-                role="user",
-                parts=[types.Part(text=prompt)],
-            )
+        content = types.Content(
+            role="user",
+            parts=[types.Part(text=prompt)],
+        )
 
-            responses = []
-            async for event in runner.run_async(
-                user_id=session.user_id,
-                session_id=session.id,
-                new_message=content,
-            ):
-                if event.content and event.content.parts:
-                    for part in event.content.parts:
-                        if part.text:
-                            responses.append(part.text)
+        responses = []
+        async for event in runner.run_async(
+            user_id=session.user_id,
+            session_id=session.id,
+            new_message=content,
+        ):
+            if event.content and event.content.parts:
+                for part in event.content.parts:
+                    if part.text:
+                        responses.append(part.text)
 
-            result_text = "\n".join(responses)
+        result_text = "\n".join(responses)
 
-            # Try to extract PDF path from response
-            pdf_path = None
-            for line in result_text.split("\n"):
-                if "/workspace/audit_" in line or ".pdf" in line.lower():
-                    pdf_path = line.strip()
-                    break
+        # Try to extract PDF path from response
+        pdf_path = None
+        for line in result_text.split("\n"):
+            if "/workspace/audit_" in line or ".pdf" in line.lower():
+                pdf_path = line.strip()
+                break
 
-            return {
-                "audit_id": session.id,
-                "url": url,
-                "response": result_text,
-                "pdf_path": pdf_path,
-                "timestamp": datetime.utcnow().isoformat(),
-            }
+        return {
+            "audit_id": session.id,
+            "url": url,
+            "response": result_text,
+            "pdf_path": pdf_path,
+            "timestamp": datetime.utcnow().isoformat(),
+        }
     finally:
-        await sandbox.kill()
-        await sandbox.close()
+        await destroy_sandbox(sandbox_id, settings)
 
 
 def main() -> int:
