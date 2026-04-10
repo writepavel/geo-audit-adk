@@ -1,13 +1,13 @@
-"""Tools package — OpenSandbox, fetch, and PDF generation tools."""
+"""Tools package \u2014 OpenSandbox, fetch, PDF, and ADK tool wrappers."""
 
 from .sandbox_tools import create_sandbox_and_tools, destroy_sandbox, SandboxTools
-from .fetch_tools import fetch_url
-from .pdf_tools import generate_pdf
+from .fetch_tools import build_fetch_script
+from .pdf_tools import build_pdf_script
 
 __all__ = [
     "create_sandbox_and_tools",
     "destroy_sandbox",
     "SandboxTools",
-    "fetch_url",
-    "generate_pdf",
+    "build_fetch_script",
+    "build_pdf_script",
 ]
