@@ -1,4 +1,4 @@
-"""Root orchestrator agent — coordinates 5 subagents and PDF generation."""
+"""Root orchestrator agent \u2014 coordinates 5 subagents and PDF generation."""
 
 import asyncio
 import json
@@ -45,16 +45,15 @@ Use the write_file and read_file tools to manage files in the sandbox.
 """
 
 
-def _build_subagent_tool(name: str, agent_module: Any, sandbox_tools: Any) -> FunctionTool:
-    """Build a FunctionTool that runs a subagent via the sandbox.
+def _build_subagent_tool(name: str, agent_module: Any) -> FunctionTool:
+    """Build a FunctionTool that runs a subagent and returns structured JSON.
 
     Args:
         name: Tool name (e.g., "ai_visibility")
         agent_module: The subagent module with get_agent(tools)
-        sandbox_tools: SandboxTools instance for execution
 
     Returns:
-        A FunctionTool that executes the subagent
+        A FunctionTool that executes the subagent and returns JSON
     """
     # Import here to avoid circular deps
     from google.adk.runners import Runner
@@ -62,7 +61,7 @@ def _build_subagent_tool(name: str, agent_module: Any, sandbox_tools: Any) -> Fu
 
     async def run_subagent(url: str) -> str:
         """Run a subagent and return its structured JSON result."""
-        # Build the subagent with sandbox tools
+        # Build the subagent with no tools (it will use the root agent's tools)
         subagent = agent_module.get_agent([])
 
         app = type("SubAgentApp", (), {"name": f"{name}_app", "root_agent": subagent})()
@@ -89,7 +88,7 @@ Analyze the following URL for {name}. Return ONLY a JSON object with this exact 
 
 URL to audit: {url}
 
-Use the tools available to analyze the URL. Be thorough and return actual findings.
+Use any available tools to analyze the URL. Be thorough and return actual findings.
 """
 
         content = types.Content(
@@ -142,12 +141,24 @@ def get_root_agent(
     Returns:
         Configured root Agent
     """
+    # Build subagent tools
+    ai_visibility_tool = _build_subagent_tool("ai_visibility", ai_visibility)
+    technical_seo_tool = _build_subagent_tool("technical_seo", technical_seo)
+    content_quality_tool = _build_subagent_tool("content_quality", content_quality)
+    schema_markup_tool = _build_subagent_tool("schema_markup", schema_markup)
+    platform_readiness_tool = _build_subagent_tool("platform_readiness", platform_readiness)
+
     tools = [
         sandbox_tools.run_in_sandbox,
         sandbox_tools.write_file,
         sandbox_tools.read_file,
         fetch_url_tool,
         generate_pdf_tool,
+        ai_visibility_tool,
+        technical_seo_tool,
+        content_quality_tool,
+        schema_markup_tool,
+        platform_readiness_tool,
     ]
 
     return Agent(
