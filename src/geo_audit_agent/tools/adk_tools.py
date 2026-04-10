@@ -4,8 +4,6 @@ These are proper ADK FunctionTool factories that use the SandboxTools
 REST client to execute scripts inside OpenSandbox.
 """
 
-import asyncio
-import tempfile
 from typing import Any
 
 from .fetch_tools import build_fetch_script
@@ -33,7 +31,12 @@ def build_fetch_url_tool(sandbox_tools: SandboxTools) -> Any:
             JSON string with status_code, url, content_type, body
         """
         script = build_fetch_script(url)
-        result = await sandbox_tools.run_in_sandbox(f"python3 -c \"{script.replace(chr(34), chr(92) + chr(34))}\"")
+
+        # Write script to temp file and run it (more reliable for multi-line scripts)
+        tmp_script_path = "/tmp/fetch_url.py"
+        await sandbox_tools.write_file(tmp_script_path, script)
+
+        result = await sandbox_tools.run_in_sandbox(f"python3 {tmp_script_path}")
         return result
 
     # Lazy import to avoid circular reference at module load
@@ -70,9 +73,6 @@ def build_generate_pdf_tool(sandbox_tools: SandboxTools) -> Any:
             return f"Error: invalid JSON audit_data: {audit_data[:200]}"
 
         script = build_pdf_script(data, output_path)
-
-        # Escape the script for shell quoting
-        escaped_script = script.replace(chr(34), chr(92) + chr(34)).replace("\n", " ")
 
         # Write script to temp file and run it (more reliable for multi-line scripts)
         tmp_script_path = "/tmp/gen_pdf.py"
