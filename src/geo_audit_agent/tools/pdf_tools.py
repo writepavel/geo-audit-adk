@@ -1,4 +1,4 @@
-"""PDF generation tool — creates professional GEO audit reports using ReportLab.
+"""PDF generation tool \u2014 creates professional GEO audit reports using ReportLab.
 
 Runs inside OpenSandbox via run_in_sandbox.
 """
@@ -28,7 +28,7 @@ def build_pdf_script(audit_data: dict[str, Any], output_path: str) -> str:
     """
     data_json = json.dumps(audit_data, indent=2)
 
-    script = f"""
+    script = f'''
 import json
 import math
 from datetime import datetime
@@ -37,7 +37,7 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas as pdf_canvas
 
-# ─── Color Palette ───────────────────────────────────────────────────────────
+# \u2500\u2500\u2500 Color Palette \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 C_DARK_BLUE  = colors.HexColor("#1A2B4A")
 C_MID_BLUE   = colors.HexColor("#2E5FAC")
 C_LIGHT_BLUE = colors.HexColor("#E8F0FB")
@@ -53,10 +53,10 @@ C_WHITE      = colors.white
 W, H = A4  # 595.27 x 841.89 points
 MARGIN = 20 * mm
 
-# ─── Load Audit Data ─────────────────────────────────────────────────────────
+# \u2500\u2500\u2500 Load Audit Data \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 audit_data = json.loads({json.dumps(data_json)})
 
-# ─── Drawing Helpers ─────────────────────────────────────────────────────────
+# \u2500\u2500\u2500 Drawing Helpers \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 
 def draw_gauge(c, x, y, radius, score, label):
     """Draw a semi-circular gauge with score."""
@@ -131,7 +131,8 @@ def draw_finding(c, y, finding, width):
     return y - 22
 
 
-# ─── Main PDF Generation ─────────────────────────────────────────────────────
+# \u2500\u2500\u2500 Main PDF Generation \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+audit_data = json.loads({json.dumps(data_json)})
 
 def generate_pdf():
     c = pdf_canvas.Canvas({json.dumps(output_path)}, pagesize=A4)
@@ -145,9 +146,9 @@ def generate_pdf():
     def footer():
         c.setFont("Helvetica", 8)
         c.setFillColor(C_GREY)
-        c.drawCentredString(W / 2, 12, f"GEO Audit Report — Page {{page_num[0]}}")
+        c.drawCentredString(W / 2, 12, f"GEO Audit Report \u2014 Page {{page_num[0]}}")
 
-    # ── PAGE 1: Cover ──────────────────────────────────────────────────────
+    # \u2500\u2500 PAGE 1: Cover \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
     y = H - MARGIN
 
     # Header bar
@@ -194,7 +195,7 @@ def generate_pdf():
 
     footer()
 
-    # ── PAGE 2+: Findings ────────────────────────────────────────────────────
+    # \u2500\u2500 PAGE 2+: Findings \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
     y = new_page()
     y = draw_section_header(c, y, "Executive Summary")
     y -= 8
@@ -244,8 +245,7 @@ def generate_pdf():
                 y = new_page()
         y -= 5
 
-    # ── Final Page: Recommendations ────────────────────────────────────────
-    if y < MARGIN + 100:
+    # \u2500\u2500 Final Page: Recommendations \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n    if y < MARGIN + 100:
         y = new_page()
 
     y = draw_section_header(c, y, "Top Recommendations")
@@ -265,29 +265,5 @@ def generate_pdf():
     print(f"PDF saved: {{json.dumps(output_path)}}")
 
 generate_pdf()
-"""
+'''
     return script
-
-
-def get_generate_pdf_tool(sandbox) -> callable:
-    """Return an ADK tool function for PDF generation."""
-
-    async def generate_pdf(audit_data: dict, output_path: str) -> str:
-        """Generate a PDF audit report.
-
-        Args:
-            audit_data: Complete audit results dict
-            output_path: Where to save the PDF
-
-        Returns:
-            Path to the generated PDF
-        """
-        script = build_pdf_script(audit_data, output_path)
-        execution = await sandbox.commands.run(f"python3 -c \"{script.replace(chr(34), chr(92)+chr(34))}\"")
-        stdout = "\n".join(msg.text for msg in execution.logs.stdout)
-        stderr = "\n".join(msg.text for msg in execution.logs.stderr)
-        if execution.error:
-            return f"Error: {execution.error.name}: {execution.error.value}\n{stderr}"
-        return stdout or f"PDF saved to {output_path}"
-
-    return generate_pdf
