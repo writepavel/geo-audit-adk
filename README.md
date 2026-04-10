@@ -1,51 +1,45 @@
-# Geo Audit ADK Agent
+# GEO Audit ADK Agent
 
 Google ADK Agent for GEO/SEO site audits with professional PDF report generation.
 
 ## Overview
 
-An AI-powered audit agent that analyzes websites for Generative Engine Optimization (GEO) and traditional SEO. Uses 5 parallel subagents to assess AI visibility, technical foundations, content quality, structured data, and platform readiness.
+An AI-powered audit agent that analyzes websites for Generative Engine Optimization (GEO) and traditional SEO. Uses 5 parallel subagents to assess AI visibility, technical foundations, content quality, structured data, and platform readiness. Produces a client-ready PDF report with a 0-100 GEO score.
 
 ## Quick Start
 
 ```bash
-# Install dependencies
 pip install -e .
+cp .env.example .env
+# Edit .env with your API keys
 
-# Run the agent
-python -m geo_audit_agent.main
-
-# Or use the CLI
-python -m geo_audit_agent.cli audit https://example.com
+python -m geo_audit_agent.main audit https://example.com
 ```
 
 ## Features
 
-- **5 Parallel Subagents** — AI Visibility, Technical, Content, Schema, Platform
-- **PDF Reports** — Professional client-ready documents with charts and gauges
-- **GEO Scoring** — 0-100 score with category breakdown
-- **Platform Readiness** — ChatGPT, Perplexity, Gemini, Google AIO specific recommendations
+- **5 Parallel Subagents** — AI Visibility, Technical, Content, Schema, Platform Readiness
+- **PDF Reports** — Professional documents with charts and gauges
+- **GEO Scoring** — 0-100 overall score with category breakdown
+- **OpenSandbox Execution** — Secure code execution via ephemeral containers
 
-## Project Structure
+## Architecture
 
 ```
-geo_audit_adk/
-├── src/geo_audit_agent/
-│   ├── main.py           # ADK entry point
-│   ├── agent.py          # Root agent orchestrator
-│   ├── subagents/        # 5 parallel subagents
-│   ├── tools/            # PDF, fetching, analysis tools
-│   └── skills/           # Geo-seo-claude ported skills
-├── tests/
-├── docs/
-└── SPEC.md
+Root Agent (geo_audit_orchestrator)
+├── AI Visibility Agent
+├── Technical SEO Agent
+├── Content Quality Agent
+├── Schema Markup Agent
+└── Platform Readiness Agent
 ```
 
 ## Documentation
 
-- [SPEC.md](./SPEC.md) — Technical specification
+- [SPEC.md](./SPEC.md) — Full technical specification
 - [docs/SETUP.md](./docs/SETUP.md) — Installation guide
 - [docs/DEV.md](./docs/DEV.md) — Development guide
+- [docs/OPENSTANDBOX.md](./docs/OPENSTANDBOX.md) — OpenSandbox details
 
 ## License
 
